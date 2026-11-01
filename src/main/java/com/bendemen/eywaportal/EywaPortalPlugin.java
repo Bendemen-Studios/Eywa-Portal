@@ -1,7 +1,9 @@
 package com.bendemen.eywaportal;
 
+import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -14,11 +16,13 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerResourcePackStatusEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,19 +34,24 @@ import java.util.UUID;
 public final class EywaPortalPlugin extends JavaPlugin implements Listener {
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
     private final Map<UUID, BukkitTask> activeTransitions = new HashMap<>();
+    private final Map<UUID, BukkitTask> overlayAnimations = new HashMap<>();
     private final Set<UUID> dispatchingWarp = new HashSet<>();
+    private final Set<UUID> resourcePackLoaded = new HashSet<>();
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         getServer().getPluginManager().registerEvents(this, this);
-        getLogger().info("EywaPortal enabled. Fullscreen image overlays are not included in this initial build.");
+        getLogger().info("EywaPortal enabled. Java fullscreen overlay activates when the merged resource pack is loaded.");
+        getLogger().info("Bedrock players currently receive the compatible title/particle fallback.");
     }
 
     @Override
     public void onDisable() {
         activeTransitions.values().forEach(BukkitTask::cancel);
+        overlayAnimations.values().forEach(BukkitTask::cancel);
         activeTransitions.clear();
+        overlayAnimations.clear();
     }
 
     @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
@@ -54,7 +63,7 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         if (message.length() < 2) return;
 
         String[] split = message.substring(1).trim().split("\\s+");
-        if (split.length < 2) return; // Leave /warp with no arguments unchanged.
+        if (split.length < 2) return;
 
         String label = split[0].toLowerCase(Locale.ROOT);
         List<String> aliases = getConfig().getStringList("warp-command.aliases");
@@ -69,6 +78,19 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         cancelTransition(event.getPlayer(), true);
+        resourcePackLoaded.remove(event.getPlayer().getUniqueId());
+    }
+
+    @EventHandler
+    public void onResourcePackStatus(PlayerResourcePackStatusEvent event) {
+        UUID id = event.getPlayer().getUniqueId();
+        if (event.getStatus() == PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED) {
+            resourcePackLoaded.add(id);
+        } else if (event.getStatus() == PlayerResourcePackStatusEvent.Status.DECLINED
+                || event.getStatus() == PlayerResourcePackStatusEvent.Status.FAILED_DOWNLOAD
+                || event.getStatus() == PlayerResourcePackStatusEvent.Status.DISCARDED) {
+            resourcePackLoaded.remove(id);
+        }
     }
 
     @Override
@@ -111,6 +133,13 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
             if (remaining[0] <= 0) {
                 BukkitTask running = activeTransitions.remove(id);
                 if (running != null) running.cancel();
+
+                if (!shouldUseFullscreenOverlay(player)
+                        && getConfig().getBoolean("screen-transition.darkness-effect", true)) {
+                    int ticks = Math.max(1, getConfig().getInt("screen-transition.darkness-ticks", 30));
+                    player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, ticks, 0, false, false, false));
+                }
+
                 if (commandToRun != null) {
                     dispatchingWarp.add(id);
                     try {
@@ -118,27 +147,83 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
                     } finally {
                         dispatchingWarp.remove(id);
                     }
-                    Bukkit.getScheduler().runTaskLater(this, () -> {
-                        if (player.isOnline()) {
-                            playBurst(player.getLocation());
-                            showArrival(player);
-                        }
-                    }, 2L);
-                } else {
+                }
+
+                Runnable arrival = () -> {
+                    if (!player.isOnline()) return;
                     playBurst(player.getLocation());
                     showArrival(player);
-                }
-                if (getConfig().getBoolean("screen-transition.darkness-effect", true)) {
-                    int ticks = Math.max(1, getConfig().getInt("screen-transition.darkness-ticks", 30));
-                    player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, ticks, 0, false, false, false));
+                };
+                if (shouldUseFullscreenOverlay(player)) {
+                    animateOverlay(player, false, arrival);
+                } else {
+                    Bukkit.getScheduler().runTaskLater(this, arrival, commandToRun == null ? 0L : 2L);
                 }
                 return;
             }
+
             showCountdown(player, remaining[0]);
             playSpiral(player.getLocation(), remaining[0]);
+            if (remaining[0] == 1 && shouldUseFullscreenOverlay(player)) {
+                animateOverlay(player, true, () -> {});
+            }
             remaining[0]--;
         }, 0L, 20L);
         activeTransitions.put(id, task);
+    }
+
+    private boolean shouldUseFullscreenOverlay(Player player) {
+        if (!getConfig().getBoolean("fullscreen-overlay.enabled", true)) return false;
+        if (!resourcePackLoaded.contains(player.getUniqueId())) return false;
+        // Java custom-font overlays do not work on Bedrock. Floodgate is optional.
+        if (getServer().getPluginManager().getPlugin("floodgate") != null) {
+            try {
+                Class<?> api = Class.forName("org.geysermc.floodgate.api.FloodgateApi");
+                Object instance = api.getMethod("getInstance").invoke(null);
+                Object result = api.getMethod("isFloodgatePlayer", UUID.class).invoke(instance, player.getUniqueId());
+                if (Boolean.TRUE.equals(result)) return false;
+            } catch (ReflectiveOperationException ignored) {
+                // If Floodgate's API differs, prefer the safe fallback rather than risking a broken overlay.
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void animateOverlay(Player player, boolean closing, Runnable after) {
+        UUID id = player.getUniqueId();
+        BukkitTask previous = overlayAnimations.remove(id);
+        if (previous != null) previous.cancel();
+
+        final int[] frame = {closing ? 0 : 7};
+        final int step = closing ? 1 : -1;
+        BukkitTask task = Bukkit.getScheduler().runTaskTimer(this, () -> {
+            if (!player.isOnline() || !resourcePackLoaded.contains(id)) {
+                BukkitTask running = overlayAnimations.remove(id);
+                if (running != null) running.cancel();
+                if (after != null) after.run();
+                return;
+            }
+
+            showOverlayFrame(player, frame[0]);
+            if (frame[0] == (closing ? 7 : 0)) {
+                BukkitTask running = overlayAnimations.remove(id);
+                if (running != null) running.cancel();
+                if (!closing && after != null) {
+                    Bukkit.getScheduler().runTaskLater(this, after, 1L);
+                }
+                return;
+            }
+            frame[0] += step;
+        }, 0L, 2L);
+        overlayAnimations.put(id, task);
+    }
+
+    private void showOverlayFrame(Player player, int frame) {
+        char glyph = (char) (0xE000 + Math.max(0, Math.min(7, frame)));
+        Component image = Component.text(String.valueOf(glyph)).font(Key.key("eywaportal", "portal"));
+        player.showTitle(Title.title(image, Component.empty(),
+                Title.Times.times(Duration.ZERO, Duration.ofMillis(120), Duration.ZERO)));
     }
 
     private void showCountdown(Player player, int seconds) {
@@ -146,13 +231,12 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         String title = getConfig().getString("screen-transition.title", "<#55FFFF><bold>EYWA PORTAL</bold>");
         String subtitle = getConfig().getString("screen-transition.subtitle", "<#B7F7FF>Opening in <seconds>...")
                 .replace("<seconds>", Integer.toString(seconds));
-        player.showTitle(net.kyori.adventure.title.Title.title(
-                miniMessage.deserialize(title), miniMessage.deserialize(subtitle)));
+        player.showTitle(Title.title(miniMessage.deserialize(title), miniMessage.deserialize(subtitle)));
     }
 
     private void showArrival(Player player) {
         if (!getConfig().getBoolean("screen-transition.enabled", true)) return;
-        player.showTitle(net.kyori.adventure.title.Title.title(
+        player.showTitle(Title.title(
                 miniMessage.deserialize(getConfig().getString("screen-transition.arrival-title", "<#55FFFF><bold>PORTAL OPENED</bold>")),
                 miniMessage.deserialize(getConfig().getString("screen-transition.arrival-subtitle", "<#D9FFFF>You have arrived."))));
     }
@@ -196,8 +280,11 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
     }
 
     private void cancelTransition(Player player, boolean silent) {
-        BukkitTask task = activeTransitions.remove(player.getUniqueId());
+        UUID id = player.getUniqueId();
+        BukkitTask task = activeTransitions.remove(id);
         if (task != null) task.cancel();
+        BukkitTask overlay = overlayAnimations.remove(id);
+        if (overlay != null) overlay.cancel();
         if (!silent && player.isOnline()) {
             player.sendMessage(prefix().append(text(" " + getConfig().getString("messages.cancelled", "<red>Transition cancelled."))));
         }
