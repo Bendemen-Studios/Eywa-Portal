@@ -87,8 +87,7 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         if (event.getStatus() == PlayerResourcePackStatusEvent.Status.SUCCESSFULLY_LOADED) {
             resourcePackLoaded.add(id);
         } else if (event.getStatus() == PlayerResourcePackStatusEvent.Status.DECLINED
-                || event.getStatus() == PlayerResourcePackStatusEvent.Status.FAILED_DOWNLOAD
-                || event.getStatus() == PlayerResourcePackStatusEvent.Status.DISCARDED) {
+                || event.getStatus() == PlayerResourcePackStatusEvent.Status.FAILED_DOWNLOAD) {
             resourcePackLoaded.remove(id);
         }
     }
