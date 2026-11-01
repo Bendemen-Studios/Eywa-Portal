@@ -88,7 +88,7 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
     public void onTeleportRequestResponse(TeleportRequestResponseEvent event) {
         if (!event.isAccept()) return;
 
-        Player accepter = event.getAccepter().getBase();
+        Player accepter = event.getRequestee().getBase();
         Player requester = event.getRequester().getBase();
         if (accepter == null || requester == null || !accepter.isOnline() || !requester.isOnline()) return;
         if (dispatchingTpaAccept.contains(accepter.getUniqueId())) return;
