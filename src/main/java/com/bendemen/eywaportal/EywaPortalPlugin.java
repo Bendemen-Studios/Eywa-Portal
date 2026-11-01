@@ -17,6 +17,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
+import net.essentialsx.api.v2.events.TeleportRequestResponseEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -36,6 +37,8 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
     private final Map<UUID, BukkitTask> activeTransitions = new HashMap<>();
     private final Map<UUID, BukkitTask> overlayAnimations = new HashMap<>();
     private final Set<UUID> dispatchingWarp = new HashSet<>();
+    private final Set<UUID> dispatchingTpaAccept = new HashSet<>();
+    private final Set<UUID> pendingTpaAccept = new HashSet<>();
     private final Set<UUID> resourcePackLoaded = new HashSet<>();
 
     @Override
@@ -81,6 +84,26 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         startTransition(player, message.substring(1).trim());
     }
 
+    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
+    public void onTeleportRequestResponse(TeleportRequestResponseEvent event) {
+        if (!event.isAccept()) return;
+
+        Player accepter = event.getAccepter().getBase();
+        Player requester = event.getRequester().getBase();
+        if (accepter == null || requester == null || !accepter.isOnline() || !requester.isOnline()) return;
+        if (dispatchingTpaAccept.contains(accepter.getUniqueId())) return;
+        if (!getConfig().getBoolean("tpa-transition.enabled", true)) return;
+
+        // Cancel this first acceptance; replay it after the requester has seen the portal.
+        if (!pendingTpaAccept.add(accepter.getUniqueId())) {
+            event.setCancelled(true);
+            return;
+        }
+        event.setCancelled(true);
+        String command = "tpaccept " + requester.getName();
+        startTransition(requester, command, accepter, () -> pendingTpaAccept.remove(accepter.getUniqueId()));
+    }
+
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         cancelTransition(event.getPlayer(), true);
@@ -124,6 +147,10 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
     }
 
     private void startTransition(Player player, String commandToRun) {
+        startTransition(player, commandToRun, player, null);
+    }
+
+    private void startTransition(Player player, String commandToRun, Player commandExecutor, Runnable onComplete) {
         UUID id = player.getUniqueId();
         int seconds = Math.max(1, getConfig().getInt("warp-command.countdown-seconds", 3));
         player.sendMessage(prefix().append(text(" " + getConfig().getString("messages.starting", "<gray>Eywa Portal opening..."))));
@@ -146,14 +173,18 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
                     player.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, ticks, 0, false, false, false));
                 }
 
-                if (commandToRun != null) {
-                    dispatchingWarp.add(id);
+                if (commandToRun != null && commandExecutor != null && commandExecutor.isOnline()) {
+                    UUID executorId = commandExecutor.getUniqueId();
+                    dispatchingWarp.add(executorId);
+                    dispatchingTpaAccept.add(executorId);
                     try {
-                        Bukkit.dispatchCommand(player, commandToRun);
+                        Bukkit.dispatchCommand(commandExecutor, commandToRun);
                     } finally {
-                        dispatchingWarp.remove(id);
+                        dispatchingWarp.remove(executorId);
+                        dispatchingTpaAccept.remove(executorId);
                     }
                 }
+                if (onComplete != null) onComplete.run();
 
                 Runnable arrival = () -> {
                     if (!player.isOnline()) return;
