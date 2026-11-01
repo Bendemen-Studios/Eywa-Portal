@@ -15,11 +15,16 @@ repositories {
         name = 'papermc'
         url = uri('https://repo.papermc.io/repository/maven-public/')
     }
+    maven {
+        name = 'essentialsx'
+        url = uri('https://repo.essentialsx.net/releases/')
+    }
 }
 
 dependencies {
     // Paper changed its version format from 26.1 onward.
     compileOnly 'io.papermc.paper:paper-api:26.3.build.+'
+    compileOnly 'net.essentialsx:EssentialsX:2.21.2'
 }
 
 tasks.withType(JavaCompile).configureEach {
