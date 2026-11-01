@@ -1,0 +1,76 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "eywaportal:gui/portal_0.png",
+      "height": 144,
+      "ascent": 72,
+      "chars": [
+        "\uF500"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "eywaportal:gui/portal_1.png",
+      "height": 144,
+      "ascent": 72,
+      "chars": [
+        "\uF501"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "eywaportal:gui/portal_2.png",
+      "height": 144,
+      "ascent": 72,
+      "chars": [
+        "\uF502"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "eywaportal:gui/portal_3.png",
+      "height": 144,
+      "ascent": 72,
+      "chars": [
+        "\uF503"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "eywaportal:gui/portal_4.png",
+      "height": 144,
+      "ascent": 72,
+      "chars": [
+        "\uF504"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "eywaportal:gui/portal_5.png",
+      "height": 144,
+      "ascent": 72,
+      "chars": [
+        "\uF505"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "eywaportal:gui/portal_6.png",
+      "height": 144,
+      "ascent": 72,
+      "chars": [
+        "\uF506"
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "eywaportal:gui/portal_7.png",
+      "height": 144,
+      "ascent": 72,
+      "chars": [
+        "\uF507"
+      ]
+    }
+  ]
+}

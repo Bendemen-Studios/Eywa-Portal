@@ -1,0 +1,10 @@
+{
+  "pack": {
+    "min_format": [
+      97,
+      1
+    ],
+    "max_format": 97,
+    "description": "EywaPortal - fullscreen EywaMC portal transition"
+  }
+}
