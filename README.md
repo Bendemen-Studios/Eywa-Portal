@@ -17,7 +17,7 @@
 - Java 25
 - EssentialsX for /warp
 - VEngine is optional but recommended for the animated organic particle portal. Copy vengine/effects/eywa_portal.yml into plugins/VEngine/effects/ and run /ve reload.
-- For the fullscreen Java overlay: merge the generated resource pack into the Java pack you already distribute (for example through RSPM).
+- For the fullscreen Java overlay: merge the generated resource pack into the Java pack you already distribute (for example through RSPM). The overlay uses private-use glyphs U+F500–U+F507 to reduce collisions with other server glyph packs.
 - Geyser/Floodgate are optional. Unison is recommended for Bedrock players if you want EywaPortal to attempt the custom-font overlay; without Unison, Bedrock uses the fallback effects.
 
 ## Build
