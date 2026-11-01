@@ -17,7 +17,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
-import net.essentialsx.api.v2.events.TeleportRequestResponseEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -45,6 +44,7 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
     public void onEnable() {
         saveDefaultConfig();
         getServer().getPluginManager().registerEvents(this, this);
+        registerEssentialsTeleportRequestEvent();
         getLogger().info("EywaPortal enabled. Java fullscreen overlay activates when the merged resource pack is loaded.");
         getLogger().info("Bedrock players currently receive the compatible title/particle fallback.");
     }
@@ -84,25 +84,52 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         startTransition(player, message.substring(1).trim());
     }
 
-    @EventHandler(priority = EventPriority.LOWEST, ignoreCancelled = true)
-    public void onTeleportRequestResponse(TeleportRequestResponseEvent event) {
-        if (!event.isAccept()) return;
-
-        Player accepter = event.getRequestee().getBase();
-        Player requester = event.getRequester().getBase();
-        if (accepter == null || requester == null || !accepter.isOnline() || !requester.isOnline()) return;
-        if (dispatchingTpaAccept.contains(accepter.getUniqueId())) return;
-        if (!getConfig().getBoolean("tpa-transition.enabled", true)) return;
-
-        // Cancel this first acceptance; replay it after the requester has seen the portal.
-        if (pendingTpaAccept.containsKey(accepter.getUniqueId())) {
-            event.setCancelled(true);
-            return;
+    private void registerEssentialsTeleportRequestEvent() {
+        // Use reflection so the plugin still compiles without bundling EssentialsX API classes.
+        try {
+            Class<?> eventClass = Class.forName("net.essentialsx.api.v2.events.TeleportRequestResponseEvent");
+            java.lang.reflect.Method handlerList = eventClass.getMethod("getHandlerList");
+            org.bukkit.event.HandlerList handlers = (org.bukkit.event.HandlerList) handlerList.invoke(null);
+            getServer().getPluginManager().registerEvent(
+                    eventClass.asSubclass(org.bukkit.event.Event.class),
+                    this,
+                    EventPriority.LOWEST,
+                    (listener, event) -> handleTeleportRequestResponse(event),
+                    this,
+                    true
+            );
+            getLogger().info("Registered EssentialsX teleport request response listener.");
+        } catch (ClassNotFoundException ex) {
+            getLogger().warning("EssentialsX TPA event API was not found; /tpaccept portal animation is unavailable.");
+        } catch (ReflectiveOperationException ex) {
+            getLogger().warning("Could not register EssentialsX TPA event listener: " + ex.getMessage());
         }
-        event.setCancelled(true);
-        pendingTpaAccept.put(accepter.getUniqueId(), requester.getUniqueId());
-        String command = "tpaccept " + requester.getName();
-        startTransition(requester, command, accepter, () -> pendingTpaAccept.remove(accepter.getUniqueId()));
+    }
+
+    private void handleTeleportRequestResponse(org.bukkit.event.Event event) {
+        try {
+            Object accepted = event.getClass().getMethod("isAccept").invoke(event);
+            if (!Boolean.TRUE.equals(accepted)) return;
+
+            Object requestee = event.getClass().getMethod("getRequestee").invoke(event);
+            Object requester = event.getClass().getMethod("getRequester").invoke(event);
+            Player accepter = (Player) requestee.getClass().getMethod("getBase").invoke(requestee);
+            Player teleporter = (Player) requester.getClass().getMethod("getBase").invoke(requester);
+            if (accepter == null || teleporter == null || !accepter.isOnline() || !teleporter.isOnline()) return;
+            if (dispatchingTpaAccept.contains(accepter.getUniqueId())) return;
+            if (!getConfig().getBoolean("tpa-transition.enabled", true)) return;
+
+            if (pendingTpaAccept.containsKey(accepter.getUniqueId())) {
+                event.getClass().getMethod("setCancelled", boolean.class).invoke(event, true);
+                return;
+            }
+            event.getClass().getMethod("setCancelled", boolean.class).invoke(event, true);
+            pendingTpaAccept.put(accepter.getUniqueId(), teleporter.getUniqueId());
+            String command = "tpaccept " + teleporter.getName();
+            startTransition(teleporter, command, accepter, () -> pendingTpaAccept.remove(accepter.getUniqueId()));
+        } catch (ReflectiveOperationException | ClassCastException ex) {
+            getLogger().warning("Could not process EssentialsX teleport request response: " + ex.getMessage());
+        }
     }
 
     @EventHandler
