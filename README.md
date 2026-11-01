@@ -8,7 +8,7 @@
 - EywaMC-style countdown titles, spiral particles, sounds and arrival burst.
 - A Java fullscreen overlay animation using a custom-font glyph resource pack.
 - Darkness/title fallback when the Java overlay pack is not loaded.
-- Bedrock players via Floodgate/Geyser are kept on the compatible title, particle, sound and darkness fallback.
+- Bedrock players use the compatible title, particle, sound and darkness fallback by default; when Unison is installed, EywaPortal also attempts the custom-font overlay for Bedrock.
 - Configurable colors/messages, countdown, particle choices and sounds.
 
 ## Requirements
@@ -18,7 +18,7 @@
 - EssentialsX for /warp
 - VEngine is optional but recommended for the animated organic particle portal. Copy vengine/effects/eywa_portal.yml into plugins/VEngine/effects/ and run /ve reload.
 - For the fullscreen Java overlay: merge the generated resource pack into the Java pack you already distribute (for example through RSPM).
-- Geyser/Floodgate are optional; Bedrock uses the fallback effects in this version.
+- Geyser/Floodgate are optional. Unison is recommended for Bedrock players if you want EywaPortal to attempt the custom-font overlay; without Unison, Bedrock uses the fallback effects.
 
 ## Build
 
@@ -51,7 +51,7 @@ The ZIP is created at build/eywaportal-java-resourcepack.zip. GitHub Actions bui
 ## Important limitations
 
 - The fullscreen image overlay uses a Java custom font and only activates after the player reports the server resource pack loaded. The custom font assets must be merged into the actual pack the client receives.
-- Bedrock's UI/resource-pack format differs from Java's custom fonts. Bedrock players currently get the countdown, particles, sounds and darkness fallback, not the fullscreen image overlay. A dedicated Bedrock UI pack and Geyser delivery/configuration still need to be implemented and tested.
+- Bedrock's UI/resource-pack format differs from Java's custom fonts. When Unison is detected, EywaPortal allows the same overlay animation to run for Floodgate players, assuming the merged pack is reported as loaded and Unison can render the font image. Without Unison, Bedrock stays on the compatible fallback. This integration must be verified in-game on your exact Unison/RSPM versions.
 - If VEngine is installed and the eywa_portal effect file has been copied in, EywaPortal triggers it through VEngine's /ve play command. Native Paper particles remain as a fallback.
 - Test on a staging server before using this on a live network. This plugin intercepts player-issued warp commands; console-issued commands are unaffected.
 
