@@ -104,16 +104,6 @@ def main() -> None:
         encoding="utf-8"
     )
 
-    # Keep an easy-to-read mapping alongside the generated font and textures.
-    mapping_lines = [
-        "EYWAPORTAL UNICODE MAPPING (JAVA)",
-        "===============================",
-        "File                         Unicode   Character",
-    ]
-    for frame in range(FRAME_COUNT):
-        glyph = chr(0xF500 + frame)
-        mapping_lines.append(f"portal_{frame}.png              U+{ord(glyph):04X}    {glyph}")
-    (temp / "unicode_mapping.txt").write_text("\n".join(mapping_lines) + "\n", encoding="utf-8")
     (temp / "pack.mcmeta").write_text(json.dumps({
         "pack": {
             "pack_format": 64,
