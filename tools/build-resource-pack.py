@@ -100,19 +100,17 @@ def main() -> None:
             "chars": [chr(0xF500 + frame)]
         })
 
+    # Use the checked-in glyph mapping and pack metadata as the source of truth.
+    canonical_font = ROOT / "resource-pack" / "assets" / "eywaportal" / "font" / "portal.json"
     (font_dir / "portal.json").write_text(
-        json.dumps({"providers": providers}, ensure_ascii=False, indent=2) + "\n",
+        canonical_font.read_text(encoding="utf-8"),
         encoding="utf-8"
     )
-
-    # Minecraft Java 26.3 resource-pack format is 97.1.
-    (temp / "pack.mcmeta").write_text(json.dumps({
-        "pack": {
-            "min_format": [97, 1],
-            "max_format": 97,
-            "description": "EywaPortal - fullscreen EywaMC portal transition"
-        }
-    }, indent=2) + "\n", encoding="utf-8")
+    canonical_meta = ROOT / "resource-pack" / "pack.mcmeta"
+    (temp / "pack.mcmeta").write_text(
+        canonical_meta.read_text(encoding="utf-8"),
+        encoding="utf-8"
+    )
     (temp / "README.txt").write_text(
         "EywaPortal Java overlay resource pack\n\n"
         "Merge the contents of this pack into your existing Java resource pack. "
