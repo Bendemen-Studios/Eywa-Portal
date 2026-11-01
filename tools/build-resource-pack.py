@@ -105,14 +105,14 @@ def main() -> None:
         encoding="utf-8"
     )
 
-    # This is an overlay intended to be merged into an existing resource pack.
-    # Do not generate pack.mcmeta here: the destination pack must keep its own
-    # version-compatible metadata. This standalone ZIP is for copying assets/.
-    (temp / "PACK_MERGE_NOTICE.txt").write_text(
-        "EywaPortal overlay assets only. Merge the assets/ directory into your existing resource pack. "
-        "Do not copy this notice or replace the destination pack.mcmeta.\n",
-        encoding="utf-8"
-    )
+    # Minecraft Java 26.3 resource-pack format is 97.1.
+    (temp / "pack.mcmeta").write_text(json.dumps({
+        "pack": {
+            "min_format": [97, 1],
+            "max_format": 97,
+            "description": "EywaPortal - fullscreen EywaMC portal transition"
+        }
+    }, indent=2) + "\n", encoding="utf-8")
     (temp / "README.txt").write_text(
         "EywaPortal Java overlay resource pack\n\n"
         "Merge the contents of this pack into your existing Java resource pack. "
