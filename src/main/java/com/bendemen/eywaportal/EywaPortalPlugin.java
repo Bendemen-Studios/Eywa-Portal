@@ -195,8 +195,11 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         BukkitTask previous = overlayAnimations.remove(id);
         if (previous != null) previous.cancel();
 
-        final int[] frame = {closing ? 0 : 7};
+        int frameCount = Math.max(1, Math.min(8, getConfig().getInt("fullscreen-overlay.frames", 8)));
+        final int lastFrame = frameCount - 1;
+        final int[] frame = {closing ? 0 : lastFrame};
         final int step = closing ? 1 : -1;
+        long frameInterval = Math.max(1L, getConfig().getLong("fullscreen-overlay.frame-interval-ticks", 2L));
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(this, () -> {
             if (!player.isOnline() || !resourcePackLoaded.contains(id)) {
                 BukkitTask running = overlayAnimations.remove(id);
@@ -206,7 +209,7 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
             }
 
             showOverlayFrame(player, frame[0]);
-            if (frame[0] == (closing ? 7 : 0)) {
+            if (frame[0] == (closing ? lastFrame : 0)) {
                 BukkitTask running = overlayAnimations.remove(id);
                 if (running != null) running.cancel();
                 if (!closing && after != null) {
@@ -215,7 +218,7 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
                 return;
             }
             frame[0] += step;
-        }, 0L, 2L);
+        }, 0L, frameInterval);
         overlayAnimations.put(id, task);
     }
 
