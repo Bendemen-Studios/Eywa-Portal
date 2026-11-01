@@ -1,0 +1,119 @@
+# EywaPortal effect for VEngine
+# Copy this file to plugins/VEngine/effects/eywa_portal.yml and run /ve reload.
+id: eywa_portal
+duration: 100
+layers:
+  # Main turquoise ring.
+  - effect: torus
+    start: 0
+    duration: 100
+    particle: DUST
+    dustSize: 1.15
+    color:
+      r: 70
+      g: 245
+      b: 255
+    scale: 1.0
+    parameters:
+      majorRadius: 1.05
+      minorRadius: 0.16
+      angularSpeed: 0.0
+    animation:
+      loop: true
+      tracks:
+        - target: rotationYaw
+          keyframes:
+            - tick: 0
+              value: 0.0
+            - tick: 100
+              value: 6.283185307179586
+        - target: scale
+          keyframes:
+            - tick: 0
+              value: 0.55
+            - tick: 30
+              value: 1.0
+            - tick: 70
+              value: 0.88
+            - tick: 100
+              value: 0.55
+
+  # A pair of organic spirals winding around the player.
+  - effect: helix
+    start: 0
+    duration: 100
+    particle: DUST
+    dustSize: 0.95
+    color:
+      r: 95
+      g: 220
+      b: 255
+    scale: 0.85
+    parameters:
+      radius: 0.55
+      height: 2.45
+      turns: 2.4
+      points: 72
+      angularSpeed: 0.14
+    animation:
+      loop: true
+      tracks:
+        - target: parameters.radius
+          keyframes:
+            - tick: 0
+              value: 0.28
+            - tick: 50
+              value: 0.78
+            - tick: 100
+              value: 0.28
+
+  - effect: helix
+    start: 0
+    duration: 100
+    particle: DUST
+    dustSize: 0.75
+    color:
+      r: 178
+      g: 112
+      b: 255
+    scale: 0.72
+    rotationYaw: 3.141592653589793
+    parameters:
+      radius: 0.42
+      height: 2.2
+      turns: 2.1
+      points: 64
+      angularSpeed: -0.12
+    animation:
+      loop: true
+      tracks:
+        - target: scale
+          keyframes:
+            - tick: 0
+              value: 0.45
+            - tick: 50
+              value: 0.95
+            - tick: 100
+              value: 0.45
+
+  # Bright particles form an airy core.
+  - effect: sphere
+    start: 12
+    duration: 76
+    particle: END_ROD
+    scale: 0.6
+    parameters:
+      radius: 0.52
+      points: 48
+      angularSpeed: 0.035
+    animation:
+      loop: true
+      tracks:
+        - target: scale
+          keyframes:
+            - tick: 0
+              value: 0.2
+            - tick: 38
+              value: 0.75
+            - tick: 76
+              value: 0.2
