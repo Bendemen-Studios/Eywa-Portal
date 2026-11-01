@@ -17,7 +17,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerResourcePackStatusEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
@@ -35,7 +34,6 @@ import java.util.UUID;
 public final class EywaPortalPlugin extends JavaPlugin implements Listener {
     private final MiniMessage miniMessage = MiniMessage.miniMessage();
     private final Map<UUID, BukkitTask> activeTransitions = new HashMap<>();
-    private final Map<UUID, Location> transitionOrigins = new HashMap<>();
     private final Map<UUID, BukkitTask> overlayAnimations = new HashMap<>();
     private final Set<UUID> dispatchingWarp = new HashSet<>();
     private final Set<UUID> dispatchingTpaAccept = new HashSet<>();
@@ -58,7 +56,6 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         activeTransitions.values().forEach(BukkitTask::cancel);
         overlayAnimations.values().forEach(BukkitTask::cancel);
         activeTransitions.clear();
-        transitionOrigins.clear();
         overlayAnimations.clear();
     }
 
@@ -157,15 +154,6 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         return requester + ":" + requestee;
     }
 
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onTeleportDuringTransition(PlayerTeleportEvent event) {
-        // If another plugin/command teleports the player during the portal countdown,
-        // cancel the pending transition so its delayed command cannot run afterwards.
-        if (activeTransitions.containsKey(event.getPlayer().getUniqueId())) {
-            cancelTransition(event.getPlayer(), true);
-        }
-    }
-
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         cancelTransition(event.getPlayer(), true);
@@ -217,8 +205,6 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
 
     private void startTransition(Player player, String commandToRun, Player commandExecutor, Runnable onComplete) {
         UUID id = player.getUniqueId();
-        // Save the starting location so a delayed command cannot run after an outside teleport.
-        transitionOrigins.put(id, player.getLocation().clone());
         int seconds = Math.max(1, getConfig().getInt("warp-command.countdown-seconds", 3));
         player.sendMessage(prefix().append(text(" " + getConfig().getString("messages.starting", "<gray>Eywa Portal opening..."))));
         player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.7f, 0.8f);
@@ -234,11 +220,10 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
                 BukkitTask running = activeTransitions.remove(id);
                 if (running != null) running.cancel();
 
-                Location origin = transitionOrigins.remove(id);
-                if (origin == null || !player.isOnline()
-                        || !origin.getWorld().equals(player.getWorld())
-                        || origin.distanceSquared(player.getLocation()) > 4.0) {
-                    // The player already moved/teleported away; never run the stale command.
+                // Do not cancel just because another plugin changed the player's location/world.
+                // Multiverse and similar plugins may move the player during the visual transition;
+                // the portal command must still run once the countdown finishes.
+                if (!player.isOnline()) {
                     if (onComplete != null) onComplete.run();
                     return;
                 }
@@ -421,7 +406,6 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         UUID id = player.getUniqueId();
         BukkitTask task = activeTransitions.remove(id);
         if (task != null) task.cancel();
-        transitionOrigins.remove(id);
         BukkitTask overlay = overlayAnimations.remove(id);
         if (overlay != null) overlay.cancel();
         // Only announce cancellation when there was actually a running transition.
