@@ -18,6 +18,23 @@ portal-commands:
     - spawn
     - essentials:spawn
 
+# Commands that interrupt a portal transition when they target a player in it.
+# The command itself is cancelled as well, so the staff action cannot race the pending warp.
+staff-interrupt-commands:
+  - tp
+  - minecraft:tp
+  - essentials:tp
+  - tphere
+  - essentials:tphere
+  - tpohere
+  - essentials:tpohere
+  - freeze
+  - essentials:freeze
+  - jail
+  - essentials:jail
+  - vanish
+  - essentials:vanish
+
 visuals:
   particle-count-per-tick: 18
   radius: 1.15
