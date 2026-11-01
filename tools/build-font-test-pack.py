@@ -50,7 +50,8 @@ def main() -> None:
     )
     (TEMP / "pack.mcmeta").write_text(json.dumps({
         "pack": {
-            "pack_format": 64,
+            "min_format": [97, 1],
+            "max_format": 97,
             "description": "EywaPortal font lookup diagnostic (U+F500)"
         }
     }, indent=2) + "\n", encoding="utf-8")
