@@ -13,10 +13,8 @@ warp-command:
 # Add namespaced aliases here if your teleport plugin uses them.
 portal-commands:
   aliases:
-    - tpa
-    - essentials:tpa
-    - tpaaccept
-    - essentials:tpaaccept
+    - tpaccept
+    - essentials:tpaccept
     - home
     - essentials:home
     - spawn
