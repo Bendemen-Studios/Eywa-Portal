@@ -16,6 +16,7 @@
 - Paper 26.3
 - Java 25
 - EssentialsX for /warp
+- VEngine is optional but recommended for the animated organic particle portal. Copy vengine/effects/eywa_portal.yml into plugins/VEngine/effects/ and run /ve reload.
 - For the fullscreen Java overlay: merge the generated resource pack into the Java pack you already distribute (for example through RSPM).
 - Geyser/Floodgate are optional; Bedrock uses the fallback effects in this version.
 
@@ -51,7 +52,7 @@ The ZIP is created at build/eywaportal-java-resourcepack.zip. GitHub Actions bui
 
 - The fullscreen image overlay uses a Java custom font and only activates after the player reports the server resource pack loaded. The custom font assets must be merged into the actual pack the client receives.
 - Bedrock's UI/resource-pack format differs from Java's custom fonts. Bedrock players currently get the countdown, particles, sounds and darkness fallback, not the fullscreen image overlay. A dedicated Bedrock UI pack and Geyser delivery/configuration still need to be implemented and tested.
-- VEngine is not required by this initial implementation; the spiral uses native Paper particles. Direct VEngine API playback can be added after its exact installed API is confirmed.
+- If VEngine is installed and the eywa_portal effect file has been copied in, EywaPortal triggers it through VEngine's /ve play command. Native Paper particles remain as a fallback.
 - Test on a staging server before using this on a live network. This plugin intercepts player-issued warp commands; console-issued commands are unaffected.
 
 ## License
