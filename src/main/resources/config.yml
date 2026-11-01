@@ -43,5 +43,6 @@ messages:
   no-permission: '<#FF7777>ʏᴏᴜ ᴄᴀɴɴᴏᴛ ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ.'
 
 vengine:
-  enabled: false
+  enabled: true
   effect: 'eywa_portal'
+  scale: 1.0
