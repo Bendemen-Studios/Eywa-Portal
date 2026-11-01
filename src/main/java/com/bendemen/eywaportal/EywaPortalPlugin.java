@@ -122,6 +122,7 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         int seconds = Math.max(1, getConfig().getInt("warp-command.countdown-seconds", 3));
         player.sendMessage(prefix().append(text(" " + getConfig().getString("messages.starting", "<gray>Eywa Portal opening..."))));
         player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.7f, 0.8f);
+        playVEnginePortal(player.getLocation(), seconds * 20 + 20);
 
         final int[] remaining = {seconds};
         BukkitTask task = Bukkit.getScheduler().runTaskTimer(this, () -> {
@@ -238,6 +239,22 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         player.showTitle(Title.title(
                 miniMessage.deserialize(getConfig().getString("screen-transition.arrival-title", "<#55FFFF><bold>PORTAL OPENED</bold>")),
                 miniMessage.deserialize(getConfig().getString("screen-transition.arrival-subtitle", "<#D9FFFF>You have arrived."))));
+    }
+
+    private void playVEnginePortal(Location location, int durationTicks) {
+        if (!getConfig().getBoolean("vengine.enabled", true)) return;
+        if (getServer().getPluginManager().getPlugin("VEngine") == null) return;
+
+        String effect = getConfig().getString("vengine.effect", "eywa_portal");
+        double scale = getConfig().getDouble("vengine.scale", 1.0);
+        String command = String.format(Locale.ROOT, "ve play %s %.3f %.3f %.3f %s %.2f %d",
+                effect,
+                location.getX(), location.getY(), location.getZ(),
+                location.getWorld().getName(), scale, Math.max(20, durationTicks));
+        boolean dispatched = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command);
+        if (!dispatched) {
+            getLogger().warning("VEngine command could not be dispatched. Native particle fallback remains active.");
+        }
     }
 
     private void playSpiral(Location base, int seconds) {
