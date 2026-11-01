@@ -225,7 +225,7 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
     }
 
     private void showOverlayFrame(Player player, int frame) {
-        char glyph = (char) (0xE000 + Math.max(0, Math.min(7, frame)));
+        char glyph = (char) (0xE200 + Math.max(0, Math.min(7, frame)));
         Component image = Component.text(String.valueOf(glyph)).font(Key.key("eywaportal", "portal"));
         player.showTitle(Title.title(image, Component.empty(),
                 Title.Times.times(Duration.ZERO, Duration.ofMillis(120), Duration.ZERO)));
