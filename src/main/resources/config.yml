@@ -9,6 +9,17 @@ warp-command:
     - essentials:warp
   countdown-seconds: 3
 
+# Commands that should open the Eywa portal before running the original command.
+# Add namespaced aliases here if your teleport plugin uses them.
+portal-commands:
+  aliases:
+    - tpa
+    - essentials:tpa
+    - home
+    - essentials:home
+    - spawn
+    - essentials:spawn
+
 visuals:
   particle-count-per-tick: 18
   radius: 1.15
