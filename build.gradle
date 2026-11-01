@@ -11,11 +11,15 @@ java {
 
 repositories {
     mavenCentral()
-    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+    maven {
+        name = 'papermc'
+        url = uri('https://repo.papermc.io/repository/maven-public/')
+    }
 }
 
 dependencies {
-    compileOnly 'io.papermc.paper:paper-api:26.3-R0.1-SNAPSHOT'
+    // Paper changed its version format from 26.1 onward.
+    compileOnly 'io.papermc.paper:paper-api:26.3.build.+'
 }
 
 tasks.withType(JavaCompile).configureEach {
