@@ -1,5 +1,6 @@
 # EywaPortal — EywaMC portal transitions
-# Native particles and title/darkness fallback. Fullscreen image overlay is a future feature.
+# Fullscreen Java overlay requires the generated Java resource pack merged into your existing pack.
+# Bedrock via Geyser currently uses the compatible title, particle, sound and darkness fallback.
 
 warp-command:
   enabled: true
@@ -16,8 +17,15 @@ visuals:
   particles:
     - END_ROD
     - WITCH
-    - GLOW
+    - SOUL_FIRE_FLAME
   arrival-burst-count: 45
+
+fullscreen-overlay:
+  enabled: true
+  # Only plays for Java players after the server resource pack reports SUCCESSFULLY_LOADED.
+  # Merge the generated resource pack assets into the pack you already send via RSPM/server.properties.
+  frames: 8
+  frame-interval-ticks: 2
 
 screen-transition:
   enabled: true
