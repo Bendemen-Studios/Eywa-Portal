@@ -70,6 +70,28 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         String[] split = message.substring(1).trim().split("\\s+");
         String label = split[0].toLowerCase(Locale.ROOT);
 
+        // Staff intervention commands cancel both the target's portal animation and the
+        // command itself, preventing a staff teleport/freeze from racing a pending warp.
+        List<String> interruptCommands = getConfig().getStringList("staff-interrupt-commands");
+        boolean isStaffInterrupt = interruptCommands.stream()
+                .map(s -> s.toLowerCase(Locale.ROOT))
+                .anyMatch(label::equals);
+        if (isStaffInterrupt && split.length >= 2) {
+            for (int i = 1; i < split.length; i++) {
+                Player target = Bukkit.getPlayerExact(split[i]);
+                if (target != null && activeTransitions.containsKey(target.getUniqueId())) {
+                    cancelTransition(target, true);
+                    event.setCancelled(true);
+                    target.sendMessage(prefix().append(text(" " + getConfig().getString(
+                            "messages.cancelled", "<red>Transition cancelled."))));
+                    if (player != target) {
+                        player.sendMessage(prefix().append(text(" <red>Command cancelled because the target is in a portal transition.")));
+                    }
+                    return;
+                }
+            }
+        }
+
         // Remember request direction so accepting /tpahere animates the player who will move.
         if ((label.equals("tpa") || label.equals("tpahere") || label.equals("essentials:tpa") || label.equals("essentials:tpahere"))
                 && split.length >= 2) {
