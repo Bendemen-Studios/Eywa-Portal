@@ -69,10 +69,10 @@ def make_svg(frame: int) -> str:
   <ellipse cx="{center_x}" cy="{center_y}" rx="{core*1.9:.1f}" ry="{core*1.9*0.56:.1f}" fill="url(#core)"/>
   {''.join(roots)}
   {''.join(specks)}
-  <ellipse cx="256" cy="144" rx="{ring:.1f}" ry="{ring*0.43:.1f}" fill="none" stroke="#4cf7ff" stroke-width="{2+4*t:.1f}" opacity="{0.38+0.45*t:.2f}"/>
-  <ellipse cx="256" cy="144" rx="{ring-13:.1f}" ry="{(ring-13)*0.43:.1f}" fill="none" stroke="#a36cff" stroke-width="2" opacity="{0.2+0.5*t:.2f}"/>
+  <ellipse cx="{center_x}" cy="{center_y}" rx="{ring:.1f}" ry="{ring*0.43:.1f}" fill="none" stroke="#4cf7ff" stroke-width="{2+4*t:.1f}" opacity="{0.38+0.45*t:.2f}"/>
+  <ellipse cx="{center_x}" cy="{center_y}" rx="{ring-13:.1f}" ry="{(ring-13)*0.43:.1f}" fill="none" stroke="#a36cff" stroke-width="2" opacity="{0.2+0.5*t:.2f}"/>
   <circle cx="{center_x}" cy="{center_y}" r="{core:.1f}" fill="url(#core)"/>
-  <circle cx="256" cy="144" r="{max(3,core*0.16):.1f}" fill="#eaffff" opacity="{0.15+0.85*t:.2f}"/>
+  <circle cx="{center_x}" cy="{center_y}" r="{max(3,core*0.16):.1f}" fill="#eaffff" opacity="{0.15+0.85*t:.2f}"/>
   <rect width="{WIDTH}" height="{HEIGHT}" fill="url(#vignette)"/>
 </svg>'''
 
