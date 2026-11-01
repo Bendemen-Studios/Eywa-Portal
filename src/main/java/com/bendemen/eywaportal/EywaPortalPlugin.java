@@ -175,13 +175,15 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
     private boolean shouldUseFullscreenOverlay(Player player) {
         if (!getConfig().getBoolean("fullscreen-overlay.enabled", true)) return false;
         if (!resourcePackLoaded.contains(player.getUniqueId())) return false;
-        // Java custom-font overlays do not work on Bedrock. Floodgate is optional.
+        // Unison can bridge Java resource-pack font images to Bedrock. Without it,
+        // Floodgate players stay on the compatible title/particle/darkness fallback.
         if (getServer().getPluginManager().getPlugin("floodgate") != null) {
             try {
                 Class<?> api = Class.forName("org.geysermc.floodgate.api.FloodgateApi");
                 Object instance = api.getMethod("getInstance").invoke(null);
                 Object result = api.getMethod("isFloodgatePlayer", UUID.class).invoke(instance, player.getUniqueId());
-                if (Boolean.TRUE.equals(result)) return false;
+                if (Boolean.TRUE.equals(result)
+                        && getServer().getPluginManager().getPlugin("Unison") == null) return false;
             } catch (ReflectiveOperationException ignored) {
                 // If Floodgate's API differs, prefer the safe fallback rather than risking a broken overlay.
                 return false;
