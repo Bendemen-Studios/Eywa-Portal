@@ -306,7 +306,9 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         if (task != null) task.cancel();
         BukkitTask overlay = overlayAnimations.remove(id);
         if (overlay != null) overlay.cancel();
-        if (!silent && player.isOnline()) {
+        // Only announce cancellation when there was actually a running transition.
+        // startTransition() calls this before every new transition to clean up stale tasks.
+        if (!silent && player.isOnline() && (task != null || overlay != null)) {
             player.sendMessage(prefix().append(text(" " + getConfig().getString("messages.cancelled", "<red>Transition cancelled."))));
         }
     }
