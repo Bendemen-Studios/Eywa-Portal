@@ -38,6 +38,8 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
     private final Set<UUID> dispatchingWarp = new HashSet<>();
     private final Set<UUID> dispatchingTpaAccept = new HashSet<>();
     private final Map<UUID, UUID> pendingTpaAccept = new HashMap<>();
+    // True when the requester used /tpahere (the requestee is the one who teleports).
+    private final Map<String, Boolean> tpaHereRequests = new HashMap<>();
     private final Set<UUID> resourcePackLoaded = new HashSet<>();
 
     @Override
@@ -67,6 +69,17 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
 
         String[] split = message.substring(1).trim().split("\\s+");
         String label = split[0].toLowerCase(Locale.ROOT);
+
+        // Remember request direction so accepting /tpahere animates the player who will move.
+        if ((label.equals("tpa") || label.equals("tpahere") || label.equals("essentials:tpa") || label.equals("essentials:tpahere"))
+                && split.length >= 2) {
+            Player target = Bukkit.getPlayerExact(split[1]);
+            if (target != null) {
+                boolean here = label.endsWith("tpahere");
+                tpaHereRequests.put(tpaRequestKey(player.getUniqueId(), target.getUniqueId()), here);
+            }
+        }
+
         List<String> warpAliases = getConfig().getStringList("warp-command.aliases");
         List<String> portalCommands = getConfig().getStringList("portal-commands.aliases");
         boolean isWarp = warpAliases.stream().map(s -> s.toLowerCase(Locale.ROOT)).anyMatch(label::equals);
@@ -114,22 +127,31 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
             Object requestee = event.getClass().getMethod("getRequestee").invoke(event);
             Object requester = event.getClass().getMethod("getRequester").invoke(event);
             Player accepter = (Player) requestee.getClass().getMethod("getBase").invoke(requestee);
-            Player teleporter = (Player) requester.getClass().getMethod("getBase").invoke(requester);
-            if (accepter == null || teleporter == null || !accepter.isOnline() || !teleporter.isOnline()) return;
+            Player requesterPlayer = (Player) requester.getClass().getMethod("getBase").invoke(requester);
+            if (accepter == null || requesterPlayer == null || !accepter.isOnline() || !requesterPlayer.isOnline()) return;
             if (dispatchingTpaAccept.contains(accepter.getUniqueId())) return;
             if (!getConfig().getBoolean("tpa-transition.enabled", true)) return;
 
+            boolean tpahere = tpaHereRequests.getOrDefault(tpaRequestKey(requesterPlayer.getUniqueId(), accepter.getUniqueId()), false);
+            Player teleporter = tpahere ? accepter : requesterPlayer;
             if (pendingTpaAccept.containsKey(accepter.getUniqueId())) {
                 event.getClass().getMethod("setCancelled", boolean.class).invoke(event, true);
                 return;
             }
             event.getClass().getMethod("setCancelled", boolean.class).invoke(event, true);
             pendingTpaAccept.put(accepter.getUniqueId(), teleporter.getUniqueId());
-            String command = "tpaccept " + teleporter.getName();
-            startTransition(teleporter, command, accepter, () -> pendingTpaAccept.remove(accepter.getUniqueId()));
+            String command = "tpaccept " + requesterPlayer.getName();
+            startTransition(teleporter, command, accepter, () -> {
+                pendingTpaAccept.remove(accepter.getUniqueId());
+                tpaHereRequests.remove(tpaRequestKey(requesterPlayer.getUniqueId(), accepter.getUniqueId()));
+            });
         } catch (ReflectiveOperationException | ClassCastException ex) {
             getLogger().warning("Could not process EssentialsX teleport request response: " + ex.getMessage());
         }
+    }
+
+    private String tpaRequestKey(UUID requester, UUID requestee) {
+        return requester + ":" + requestee;
     }
 
     @EventHandler
@@ -137,6 +159,7 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         cancelTransition(event.getPlayer(), true);
         UUID quitId = event.getPlayer().getUniqueId();
         pendingTpaAccept.entrySet().removeIf(entry -> entry.getKey().equals(quitId) || entry.getValue().equals(quitId));
+        tpaHereRequests.keySet().removeIf(key -> key.startsWith(quitId + ":") || key.endsWith(":" + quitId));
         resourcePackLoaded.remove(quitId);
     }
 
