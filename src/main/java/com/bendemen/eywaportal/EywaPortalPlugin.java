@@ -38,7 +38,7 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
     private final Map<UUID, BukkitTask> overlayAnimations = new HashMap<>();
     private final Set<UUID> dispatchingWarp = new HashSet<>();
     private final Set<UUID> dispatchingTpaAccept = new HashSet<>();
-    private final Set<UUID> pendingTpaAccept = new HashSet<>();
+    private final Map<UUID, UUID> pendingTpaAccept = new HashMap<>();
     private final Set<UUID> resourcePackLoaded = new HashSet<>();
 
     @Override
@@ -95,11 +95,12 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         if (!getConfig().getBoolean("tpa-transition.enabled", true)) return;
 
         // Cancel this first acceptance; replay it after the requester has seen the portal.
-        if (!pendingTpaAccept.add(accepter.getUniqueId())) {
+        if (pendingTpaAccept.containsKey(accepter.getUniqueId())) {
             event.setCancelled(true);
             return;
         }
         event.setCancelled(true);
+        pendingTpaAccept.put(accepter.getUniqueId(), requester.getUniqueId());
         String command = "tpaccept " + requester.getName();
         startTransition(requester, command, accepter, () -> pendingTpaAccept.remove(accepter.getUniqueId()));
     }
@@ -107,7 +108,9 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         cancelTransition(event.getPlayer(), true);
-        resourcePackLoaded.remove(event.getPlayer().getUniqueId());
+        UUID quitId = event.getPlayer().getUniqueId();
+        pendingTpaAccept.entrySet().removeIf(entry -> entry.getKey().equals(quitId) || entry.getValue().equals(quitId));
+        resourcePackLoaded.remove(quitId);
     }
 
     @EventHandler
