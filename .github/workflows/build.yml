@@ -32,6 +32,7 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check cairosvg
           python tools/build-resource-pack.py
+          python tools/build-font-test-pack.py
       - name: Upload build outputs
         uses: actions/upload-artifact@v4
         with:
@@ -39,4 +40,5 @@ jobs:
           path: |
             build/libs/*.jar
             build/eywaportal-java-resourcepack.zip
+            build/eywaportal-font-test.zip
           if-no-files-found: error
