@@ -15,7 +15,7 @@ import cairosvg
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "build" / "eywaportal-java-resourcepack.zip"
-WIDTH, HEIGHT = 512, 288
+WIDTH, HEIGHT = 256, 144
 FRAME_COUNT = 8
 
 
