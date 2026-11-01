@@ -96,7 +96,7 @@ def main() -> None:
             "file": f"eywaportal:gui/{name}.png",
             "height": HEIGHT,
             "ascent": HEIGHT // 2,
-            "chars": [chr(0xE000 + frame)]
+            "chars": [chr(0xE200 + frame)]
         })
 
     (font_dir / "portal.json").write_text(
