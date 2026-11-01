@@ -1,0 +1,39 @@
+# EywaPortal — EywaMC portal transitions
+# Native particles and title/darkness fallback. Fullscreen image overlay is a future feature.
+
+warp-command:
+  enabled: true
+  aliases:
+    - warp
+    - essentials:warp
+  countdown-seconds: 3
+
+visuals:
+  particle-count-per-tick: 18
+  radius: 1.15
+  height: 2.2
+  rotation-speed: 0.28
+  particles:
+    - END_ROD
+    - WITCH
+    - GLOW
+  arrival-burst-count: 45
+
+screen-transition:
+  enabled: true
+  darkness-effect: true
+  darkness-ticks: 30
+  title: '<#55FFFF><bold>EYWA PORTAL</bold>'
+  subtitle: '<#B7F7FF>Opening in <seconds>...'
+  arrival-title: '<#55FFFF><bold>PORTAL OPENED</bold>'
+  arrival-subtitle: '<#D9FFFF>You have arrived.'
+
+messages:
+  prefix: '<#5555FF><bold>EywaMC</bold> <reset><#555555>|'
+  starting: '<#AAAAAA>ᴇʏᴡᴀ ᴘᴏʀᴛᴀʟ ɪs ᴏᴘᴇɴɪɴɢ...'
+  cancelled: '<#FF7777>ᴛʀᴀɴsɪᴛɪᴏɴ ᴄᴀɴᴄᴇʟʟᴇᴅ.'
+  no-permission: '<#FF7777>ʏᴏᴜ ᴄᴀɴɴᴏᴛ ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ.'
+
+vengine:
+  enabled: false
+  effect: 'eywa_portal'
