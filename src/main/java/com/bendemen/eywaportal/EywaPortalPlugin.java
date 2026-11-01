@@ -63,15 +63,21 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         if (message.length() < 2) return;
 
         String[] split = message.substring(1).trim().split("\\s+");
-        if (split.length < 2) return;
-
         String label = split[0].toLowerCase(Locale.ROOT);
-        List<String> aliases = getConfig().getStringList("warp-command.aliases");
-        if (aliases.stream().map(s -> s.toLowerCase(Locale.ROOT)).noneMatch(label::equals)) return;
+        List<String> warpAliases = getConfig().getStringList("warp-command.aliases");
+        List<String> portalCommands = getConfig().getStringList("portal-commands.aliases");
+        boolean isWarp = warpAliases.stream().map(s -> s.toLowerCase(Locale.ROOT)).anyMatch(label::equals);
+        boolean isPortalCommand = portalCommands.stream().map(s -> s.toLowerCase(Locale.ROOT)).anyMatch(label::equals);
+
+        if (!isWarp && !isPortalCommand) return;
+        // Warp needs a destination argument; /home and /spawn are valid without one.
+        if (isWarp && split.length < 2) return;
+        if (label.equals("tpa") && split.length < 2) return;
         if (dispatchingWarp.contains(player.getUniqueId())) return;
 
         event.setCancelled(true);
         cancelTransition(player, false);
+        // Keep the full original command (arguments included), without the leading slash.
         startTransition(player, message.substring(1).trim());
     }
 
