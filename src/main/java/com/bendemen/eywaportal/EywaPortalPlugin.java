@@ -103,15 +103,18 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         }
 
         List<String> warpAliases = getConfig().getStringList("warp-command.aliases");
-        List<String> portalCommands = getConfig().getStringList("portal-commands.aliases");
+        List<String> portalCommands = getConfig().getStringList("portal-commands.commands");
         boolean isWarp = warpAliases.stream().map(s -> s.toLowerCase(Locale.ROOT)).anyMatch(label::equals);
-        boolean isPortalCommand = portalCommands.stream().map(s -> s.toLowerCase(Locale.ROOT)).anyMatch(label::equals);
-        List<String> portalSubcommands = getConfig().getStringList("portal-commands.subcommands");
-        boolean isPortalSubcommand = split.length >= 2 && portalSubcommands.stream()
-                .map(s -> s.toLowerCase(Locale.ROOT).trim())
-                .anyMatch(s -> s.equals(label + " " + split[1].toLowerCase(Locale.ROOT)));
+        boolean isPortalCommand = portalCommands.stream().anyMatch(configured -> {
+            String[] commandParts = configured.trim().toLowerCase(Locale.ROOT).split("\\s+");
+            if (split.length < commandParts.length) return false;
+            for (int i = 0; i < commandParts.length; i++) {
+                if (!split[i].equalsIgnoreCase(commandParts[i])) return false;
+            }
+            return true;
+        });
 
-        if (!isWarp && !isPortalCommand && !isPortalSubcommand) return;
+        if (!isWarp && !isPortalCommand) return;
         // Warp needs a destination argument; /home and /spawn are valid without one.
         if (isWarp && split.length < 2) return;
         if (label.equals("tpa") && split.length < 2) return;
