@@ -10,15 +10,13 @@ warp-command:
   countdown-seconds: 3
 
 # Commands that should open the Eywa portal before running the original command.
-# Add namespaced aliases here if your teleport plugin uses them.
+# Add one command per entry. Multi-word commands such as "pfaction home" are supported.
 portal-commands:
-  aliases:
+  commands:
     - home
     - essentials:home
     - spawn
     - essentials:spawn
-  # Commands with a subcommand that should open the portal.
-  subcommands:
     - pfaction home
 
 # Commands that interrupt a portal transition when they target a player in it.
