@@ -106,8 +106,12 @@ public final class EywaPortalPlugin extends JavaPlugin implements Listener {
         List<String> portalCommands = getConfig().getStringList("portal-commands.aliases");
         boolean isWarp = warpAliases.stream().map(s -> s.toLowerCase(Locale.ROOT)).anyMatch(label::equals);
         boolean isPortalCommand = portalCommands.stream().map(s -> s.toLowerCase(Locale.ROOT)).anyMatch(label::equals);
+        List<String> portalSubcommands = getConfig().getStringList("portal-commands.subcommands");
+        boolean isPortalSubcommand = split.length >= 2 && portalSubcommands.stream()
+                .map(s -> s.toLowerCase(Locale.ROOT).trim())
+                .anyMatch(s -> s.equals(label + " " + split[1].toLowerCase(Locale.ROOT)));
 
-        if (!isWarp && !isPortalCommand) return;
+        if (!isWarp && !isPortalCommand && !isPortalSubcommand) return;
         // Warp needs a destination argument; /home and /spawn are valid without one.
         if (isWarp && split.length < 2) return;
         if (label.equals("tpa") && split.length < 2) return;
