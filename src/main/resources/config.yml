@@ -17,6 +17,9 @@ portal-commands:
     - essentials:home
     - spawn
     - essentials:spawn
+  # Commands with a subcommand that should open the portal.
+  subcommands:
+    - pfaction home
 
 # Commands that interrupt a portal transition when they target a player in it.
 # The command itself is cancelled as well, so the staff action cannot race the pending warp.
